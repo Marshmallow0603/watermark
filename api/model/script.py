@@ -10,7 +10,6 @@ from model.network import Generator
 sd_path = 'weights/save_weights.pth'
 
 
-
 class DetectInpaint:
     def __init__(self, image:Image, mask:Image=None, task:str=None, use_cuda_if_available:bool=True) -> None:
         self.image = image
@@ -19,6 +18,9 @@ class DetectInpaint:
         elif task == 'detect' or task is None:
             self.model = YOLO('weights/best.pt')
             self.mask = self.detect_mask(img=self.image)
+        elif task == 'segment':
+            self.model = YOLO('weights/best-seg.pt', task='segment')
+            self.mask = self.segment_mask(img=self.image)
         elif task == 'avito':
             self.mask = self.mask_of_templates(img=self.image, name=task)
         else:
@@ -50,6 +52,19 @@ class DetectInpaint:
         for wm_xyxy in predict.boxes.xyxy:
             xyxy = list(map(int, wm_xyxy))
             mask1.rectangle([(xyxy[0], xyxy[1]), (xyxy[2], xyxy[3])], fill='white')
+        return mask
+    
+    
+    def segment_mask(self, img:Image):
+        img = img.copy()
+        predict = self.model([img], conf=0.5)[0]  
+        mask = Image.new('RGBA', tuple(list(predict.boxes.orig_shape)[::-1]), (0, 0, 0))
+        mask1 = ImageDraw.Draw(mask)
+        
+        for result in predict:
+            masks = result.masks
+            xy = list(map(lambda x: (x[0], x[1]) ,masks[0].xy[0]))
+            mask1.polygon(xy, fill='white')
         return mask
         
     
