@@ -1,7 +1,7 @@
 import torch
 import torchvision.transforms as T
 from ultralytics import YOLO
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 import os
 
 from model.network import Generator
@@ -21,6 +21,7 @@ class DetectInpaint:
         elif task == 'segment':
             self.model = YOLO('weights/best-seg.pt', task='segment')
             self.mask = self.segment_mask(img=self.image)
+            self.mask = self.dilate(3, self.mask)
         elif task == 'avito':
             self.mask = self.mask_of_templates(img=self.image, name=task)
         else:
@@ -87,3 +88,9 @@ class DetectInpaint:
         else:
             raise ValueError
         return mask_pil
+    
+    
+    def dilate(self, cycles, image):
+        for _ in range(cycles):
+            image = image.filter(ImageFilter.MaxFilter(3))
+        return image
