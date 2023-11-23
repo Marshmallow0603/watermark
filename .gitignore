@@ -174,3 +174,4 @@ cache/
 *.*.ts
 *.log
 *__pycache__
+other/
