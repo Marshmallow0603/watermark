@@ -21,7 +21,9 @@ class DetectInpaint:
         elif task == 'segment':
             self.model = YOLO('weights/best-seg.pt', task='segment')
             self.mask = self.segment_mask(img=self.image)
-            self.mask = self.dilate(3, self.mask)
+            self.mask = self.dilate(4, self.mask)
+            self.mask = self.mask.convert("L")
+            self.mask = self.mask.filter(ImageFilter.BoxBlur(5))
         elif task == 'avito':
             self.mask = self.mask_of_templates(img=self.image, name=task)
         else:
